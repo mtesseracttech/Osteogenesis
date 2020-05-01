@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace Osteogenesis
@@ -6,28 +8,54 @@ namespace Osteogenesis
     public class GaussArea
     {
         //A - B and the 2 triangles the Vertex is part of
-        private HashSet<(int, int)> _edges;
+        private Dictionary<(Vector3, Vector3), List<(int, int)>> _edges = new Dictionary<(Vector3, Vector3), List<(int, int)>>();
+
+        private List<FaceIndexTriplet> _faceIndexTriplets = new List<FaceIndexTriplet>();
 
         //Links a given index to its occurences in other triangles
         //Basically: for a given Vector, it shows all occurences
-        private Dictionary<Vector3, List<int>> _vertices;
+        private Dictionary<Vector3, List<int>> _vertices = new Dictionary<Vector3, List<int>>();
+        private Dictionary<Vector3, float> _vertexGaussArea = new Dictionary<Vector3, float>();
 
+        //Vertex + Pivot normal pairs
+        private Dictionary<Vector3, Vector3> _pivotNormals =  new Dictionary<Vector3, Vector3>();
+        
+        
 
         public GaussArea(Mesh mesh)
         {
-            _vertices = new Dictionary<Vector3, List<int>>();
-
-            var triangles = mesh.GetTriangles(0);
-            foreach (var index in triangles)
+            var indices = mesh.GetIndices(0);
+            //Creating an easier to work with structure of index triplets
+            for (int i = 0; i < indices.Length; i+=3)
             {
-                Vector3 vtx = mesh.vertices[index];
-                if (!_vertices.ContainsKey(vtx))
-                {
-                    _vertices.Add(vtx, new List<int>());
-                }
-
-                _vertices[vtx].Add(index);
+                var triplet = new FaceIndexTriplet(indices[i], indices[i+1], indices[i+2]);
+                _faceIndexTriplets.Add(triplet);
             }
+
+            foreach (var triplet in _faceIndexTriplets)
+            {
+            }
+
+
+
+            // var indices = mesh.GetIndices(0);
+            // foreach (var index in indices)
+            // {
+            //     Vector3 vtx = mesh.vertices[index];
+            //     if (!_vertices.ContainsKey(vtx))
+            //     {
+            //         _vertices.Add(vtx, new List<int>());
+            //     }
+            //
+            //     _vertices[vtx].Add(index);
+            // }
+            //
+            //
+            // _vertexGaussArea = new Dictionary<Vector3, float>();
+            // foreach (var vertexIndexPair in _vertices)
+            // {
+            //     _vertexGaussArea.Add(vertexIndexPair.Key, GaussAreaVertex(vertexIndexPair.Key, mesh));
+            // }
         }
 
 
@@ -52,6 +80,8 @@ namespace Osteogenesis
 
             //Now we have a proper pivot to project the rest around
             pivotNormal = pivotNormal.normalized;
+            
+            _pivotNormals.Add(vertex, pivotNormal);
 
             var projectedNormals = new List<Vector3>(relatedNormals.Count);
             foreach (var normal in relatedNormals)
@@ -76,7 +106,20 @@ namespace Osteogenesis
                 );
             }
 
-            angleVectorPairs.Sort();
+            angleVectorPairs.Sort((t1, t2) =>
+            {
+                int comp = t1.Item1.CompareTo(t2.Item1);
+                if (comp != 0) return comp;
+                for (int i = 0; i < 3; i++)
+                {
+                    comp = Comparer<float>.Default.Compare(t1.Item2[i], t2.Item2[i]);
+                    if (comp != 0)
+                    {
+                        return comp;
+                    }
+                }
+                return comp;
+            });
 
             //Unzipping and moving the sorted normals into a list to be turned into gauss area
             var sortedNormals = new List<Vector3>(angleVectorPairs.Count);
@@ -90,6 +133,16 @@ namespace Osteogenesis
 
         private void ProcessEdge((Vector3, Vector3) edge, Mesh mesh)
         {
+            
+        }
+
+
+        public void DrawPivotNormals()
+        {
+            foreach (var normalPair in _pivotNormals)
+            {
+                Debug.DrawLine(normalPair.Key, normalPair.Key + normalPair.Value);
+            }
         }
     }
 }

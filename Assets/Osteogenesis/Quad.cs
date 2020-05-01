@@ -12,10 +12,10 @@ namespace Osteogenesis
             D = d;
         }
 
-        private Vector3 A { get; }
-        private Vector3 B { get; }
-        private Vector3 C { get; }
-        private Vector3 D { get; }
+        public Vector3 A { get; }
+        public Vector3 B { get; }
+        public Vector3 C { get; }
+        public Vector3 D { get; }
         
         
         public Vector3 GetNormal()

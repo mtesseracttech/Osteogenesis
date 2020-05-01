@@ -4,15 +4,22 @@ namespace Osteogenesis
 {
     public class Triangle
     {
-        private Vector3 A { get; }
-        private Vector3 B { get; }
-        private Vector3 C { get; }
-        
+        public Vector3 A { get; }
+        public Vector3 B { get; }
+        public Vector3 C { get; }
+
         public Triangle(Vector3 a, Vector3 b, Vector3 c)
         {
             A = a;
             B = b;
             C = c;
+        }
+        
+        public Triangle(FaceIndexTriplet triplet, Mesh mesh)
+        {
+            A = mesh.vertices[triplet.V1];
+            B = mesh.vertices[triplet.V1];
+            C = mesh.vertices[triplet.V1];
         }
 
         public Vector3 GetNormal()

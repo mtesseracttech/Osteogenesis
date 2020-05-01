@@ -12,7 +12,7 @@ namespace Osteogenesis
             var angles = GetInternalAnglesTriangleUnitSphere(a, b, c);
             return angles.x + angles.y + angles.z - Mathf.PI;
         }
-
+        
         /*
          * Faster version of the algorithm, because triangles are simpler and cannot be concave
          */
@@ -33,11 +33,20 @@ namespace Osteogenesis
             return new Vector3(angleA, angleB, angleC) * Mathf.Deg2Rad;
         }
 
-
+        public static Vector3 GetInternalAnglesTriangleUnitSphere(Triangle tri)
+        {
+            return GetInternalAnglesTriangleUnitSphere(tri.A, tri.B, tri.C);
+        }
+        
         public static float AreaQuadOnUnitSphere(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
         {
             var angles = GetInternalAnglesQuadUnitSphere(a, b, c, d);
             return angles.x + angles.y + angles.z + angles.w - 2.0f * Mathf.PI;
+        }
+        
+        public static float AreaQuadOnUnitySphere(Quad quad)
+        {
+            return AreaQuadOnUnitSphere(quad.A, quad.B, quad.C, quad.D);
         }
 
         public static Vector4 GetInternalAnglesQuadUnitSphere(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
