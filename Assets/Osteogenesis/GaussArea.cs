@@ -24,38 +24,38 @@ namespace Osteogenesis
 
         public GaussArea(Mesh mesh)
         {
-            var indices = mesh.GetIndices(0);
-            //Creating an easier to work with structure of index triplets
-            for (int i = 0; i < indices.Length; i+=3)
-            {
-                var triplet = new FaceIndexTriplet(indices[i], indices[i+1], indices[i+2]);
-                _faceIndexTriplets.Add(triplet);
-            }
-
-            foreach (var triplet in _faceIndexTriplets)
-            {
-            }
-
-
-
             // var indices = mesh.GetIndices(0);
-            // foreach (var index in indices)
+            // //Creating an easier to work with structure of index triplets
+            // for (int i = 0; i < indices.Length; i+=3)
             // {
-            //     Vector3 vtx = mesh.vertices[index];
-            //     if (!_vertices.ContainsKey(vtx))
-            //     {
-            //         _vertices.Add(vtx, new List<int>());
-            //     }
-            //
-            //     _vertices[vtx].Add(index);
+            //     var triplet = new FaceIndexTriplet(indices[i], indices[i+1], indices[i+2]);
+            //     _faceIndexTriplets.Add(triplet);
             // }
             //
-            //
-            // _vertexGaussArea = new Dictionary<Vector3, float>();
-            // foreach (var vertexIndexPair in _vertices)
+            // foreach (var triplet in _faceIndexTriplets)
             // {
-            //     _vertexGaussArea.Add(vertexIndexPair.Key, GaussAreaVertex(vertexIndexPair.Key, mesh));
             // }
+
+
+
+            var indices = mesh.GetIndices(0);
+            foreach (var index in indices)
+            {
+                Vector3 vtx = mesh.vertices[index];
+                if (!_vertices.ContainsKey(vtx))
+                {
+                    _vertices.Add(vtx, new List<int>());
+                }
+            
+                _vertices[vtx].Add(index);
+            }
+            
+            
+            _vertexGaussArea = new Dictionary<Vector3, float>();
+            foreach (var vertexIndexPair in _vertices)
+            {
+                _vertexGaussArea.Add(vertexIndexPair.Key, GaussAreaVertex(vertexIndexPair.Key, mesh));
+            }
         }
 
 
