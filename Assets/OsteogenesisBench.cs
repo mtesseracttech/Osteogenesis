@@ -22,6 +22,9 @@ public class OsteogenesisBench : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        gaussArea.DrawPivotNormals();
+        if (gaussArea != null)
+        {
+            gaussArea.DrawPivotNormals();
+        }
     }
 }

@@ -18,8 +18,13 @@ namespace Osteogenesis
         public Triangle(FaceIndexTriplet triplet, Mesh mesh)
         {
             A = mesh.vertices[triplet.V1];
-            B = mesh.vertices[triplet.V1];
-            C = mesh.vertices[triplet.V1];
+            B = mesh.vertices[triplet.V2];
+            C = mesh.vertices[triplet.V3];
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(A)}: {A}, {nameof(B)}: {B}, {nameof(C)}: {C}";
         }
 
         public Vector3 GetNormal()

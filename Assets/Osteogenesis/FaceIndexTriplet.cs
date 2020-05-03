@@ -55,5 +55,24 @@ namespace Osteogenesis
         {
             return $"{nameof(V1)}: {V1}, {nameof(V2)}: {V2}, {nameof(V3)}: {V3}";
         }
+
+        public int this[int i]
+        {
+            get
+            {
+                switch (i)
+                {
+                    case 0:
+                        return V1;
+                    case 1:
+                        return V2;
+                    case 2:
+                        return V3;
+                    default:
+                        throw new NotImplementedException(
+                            "Face index triplet assumes triangels, indices below 0 and over 2 are invalid.");
+                }
+            }
+        }
     }
 }
