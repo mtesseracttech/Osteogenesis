@@ -17,6 +17,8 @@ public class OsteogenesisBench : MonoBehaviour
         if(!testObject.GetComponent<MeshFilter>()) Debug.Log("No Meshfilter on the Test Object");
         
         gaussArea = new GaussArea(testObject.GetComponent<MeshFilter>().sharedMesh);
+        
+        //Debug.Log(gaussArea.ToString());
     }
 
     // Update is called once per frame
@@ -24,7 +26,8 @@ public class OsteogenesisBench : MonoBehaviour
     {
         if (gaussArea != null)
         {
-            gaussArea.DrawPivotNormals();
+            gaussArea.DrawSurfaceInfo();
+            //gaussArea.DrawPivotNormals();
         }
     }
 }

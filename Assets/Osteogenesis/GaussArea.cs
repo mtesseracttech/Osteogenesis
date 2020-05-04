@@ -11,8 +11,6 @@ namespace Osteogenesis
 
         private Dictionary<Vector3, Vector3> _pivotNormals = new Dictionary<Vector3, Vector3>();
         
-        private Vector3 exampleVertex = Vector3.zero;
-
         public GaussArea(Mesh mesh)
         {
             var faceIndexTriplets = new List<FaceIndexTriplet>(mesh.GetIndices(0).Length / 3);
@@ -23,6 +21,8 @@ namespace Osteogenesis
             {
                 faceIndexTriplets.Add(new FaceIndexTriplet(indices[i], indices[i + 1], indices[i + 2]));
             }
+            
+            Debug.Log("Creating " + faceIndexTriplets.Count + " face index triplets done");
 
             //Creating vertex -> connecting triangles dictionary
             //Deriving gauss area from vertices
@@ -49,6 +49,9 @@ namespace Osteogenesis
                     vertexToIndexTripletMap[triangleVertex].Add(indexTriplet);
                 }
             }
+            
+            Debug.Log("Mapped all " + vertexToIndexTripletMap.Count + " vertices to their triangles");
+
 
             foreach (var vertexToTriplets in vertexToIndexTripletMap)
             {
@@ -59,7 +62,7 @@ namespace Osteogenesis
 
         private float ProcessVertex(Vector3 vertex, List<FaceIndexTriplet> connectedTriangles, Mesh mesh)
         {
-            if (connectedTriangles.Count < 2) return 0.0f;
+            if (connectedTriangles.Count < 1) return 0.0f;
 
             var triangleAngles = new List<float>();
             var triangleNormals = new List<Vector3>();
@@ -79,7 +82,7 @@ namespace Osteogenesis
                             mesh.vertices[connectedTriangle[(i + 2) % 3]]);
 
                         //get the angle between b - a and c - a
-                        var angle = Vector3.Angle(tri.B - tri.A, tri.C - tri.A);
+                        var angle = Vector3.Angle(tri.B - tri.A, tri.C - tri.A) * Mathf.Deg2Rad;
 
                         totalAngle += angle;
                         triangleAngles.Add(angle);
@@ -91,20 +94,16 @@ namespace Osteogenesis
 
             // We now have theta_t (total angle at vertex) and theta_i (angle of a given triangle) 
             // Calculating an individual angle's normal contribution and scaling the corresponding normal by that value
+            var pivotNormal = Vector3.zero;
             for (int i = 0; i < triangleNormals.Count; i++)
             {
                 var normalContribution = triangleAngles[i] / totalAngle;
-                triangleNormals[i] = triangleNormals[i] * normalContribution;
+                pivotNormal += triangleNormals[i] * normalContribution;
             }
 
-            var pivotNormal = Vector3.zero;
-            foreach (var normal in triangleNormals)
-            {
-                pivotNormal += normal;
-            }
-
+            //Making sure the magnitude is 1
             pivotNormal = pivotNormal.normalized;
-
+            //Adding it to the list of debug info
             _pivotNormals.Add(vertex, pivotNormal);
 
             //We have our pivot normal now, so it's time to project the other vertices around this normal
@@ -125,9 +124,12 @@ namespace Osteogenesis
             var angleNormalPairs = new SortedDictionary<float, Vector3>();
             for (var i = 0; i < projectedNormals.Count; i++)
             {
-                // var projectedNormal = projectedNormals[i];
-                // angleNormalPairs.Add(Vector3.SignedAngle(angularOrigin, projectedNormal, pivotNormal),
-                //     triangleNormals[i]);
+                var projectedNormal = projectedNormals[i];
+                var angle = Vector3.SignedAngle(angularOrigin, projectedNormal, pivotNormal);
+                if (!angleNormalPairs.ContainsKey(angle))
+                {
+                    angleNormalPairs.Add(angle, triangleNormals[i]);
+                }
             }
 
             var sortedNormals = new List<Vector3>(projectedNormals.Count);
@@ -135,33 +137,76 @@ namespace Osteogenesis
             {
                 sortedNormals.Add(angleNormalPair.Value);
             }
-            
-            if (exampleVertex == Vector3.zero)
-            {
-                var duration = 20f;
-                exampleVertex = vertex;
-                Debug.DrawRay(vertex, pivotNormal, Color.green, duration);
-                
-                foreach (var normal in triangleNormals)
-                {
-                    Debug.DrawRay(vertex, normal, Color.blue,  duration);
-                }
-                
-                foreach (var projected in projectedNormals)
-                {
-                    Debug.DrawRay(vertex, projected, Color.cyan,  duration);
-                }
-            }
 
-            return GeometryUtils.AreaPolygonOnUnitSphere(sortedNormals);
+            var area = GeometryUtils.AreaPolygonOnUnitSphere(sortedNormals);
+
+            // if (area > 2.0 * Mathf.PI)
+            // {
+            //     string sortedNormalsInfo = "Sorted Normals of Vertex " + vertex.ToString("F4") + ": ";
+            //     foreach (var normal in sortedNormals)
+            //     {
+            //         sortedNormalsInfo += normal.ToString("F4") + ", ";
+            //     }
+            //     
+            //     Debug.Log(sortedNormalsInfo);
+            //
+            //     Debug.DrawRay(vertex, pivotNormal, Color.magenta, 300f);
+            //
+            //     for (var i = 0; i < sortedNormals.Count; i++)
+            //     {
+            //         var sortedNormal = sortedNormals[i];
+            //
+            //         var color = Color.black;
+            //         switch (i)
+            //         {
+            //             case 0:
+            //                 color = Color.green;
+            //                 break;
+            //             case 1:
+            //                 color = Color.yellow;
+            //                 break;
+            //             case 2:
+            //                 color = Color.blue;
+            //                 break;
+            //         }
+            //
+            //         Debug.DrawRay(vertex, sortedNormal, color, 300f);
+            //     }
+            // }
+
+            return area;
         }
 
         public void DrawPivotNormals()
         {
-            foreach (var normalPair in _pivotNormals)
+            // foreach (var normalPair in _pivotNormals)
+            // {
+            //     Debug.DrawLine(normalPair.Key, normalPair.Key + normalPair.Value);
+            // }
+        }
+
+        public void DrawSurfaceInfo()
+        {
+            foreach (var vertexGaussArea in _vertexGaussArea)
             {
-                Debug.DrawLine(normalPair.Key, normalPair.Key + normalPair.Value);
+                //Max area that a gauss area in this context could have is 2 pi, as that is half the area of the unit circle
+                var scale = 1.0f;// / (Mathf.PI * 2);
+
+                Debug.DrawLine(vertexGaussArea.Key,
+                    vertexGaussArea.Key + _pivotNormals[vertexGaussArea.Key] * vertexGaussArea.Value * scale,
+                    Color.red);
             }
+        }
+
+        public override string ToString()
+        {
+            string gaussInfo = "";
+            foreach (var gausArea in _vertexGaussArea)
+            {
+                gaussInfo += gausArea.Value + ", ";
+            }
+
+            return gaussInfo;
         }
     }
 }

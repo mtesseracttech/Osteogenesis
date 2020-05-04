@@ -12,7 +12,7 @@ namespace Osteogenesis
             var angles = GetInternalAnglesTriangleUnitSphere(a, b, c);
             return angles.x + angles.y + angles.z - Mathf.PI;
         }
-        
+
         /*
          * Faster version of the algorithm, because triangles are simpler and cannot be concave
          */
@@ -37,13 +37,13 @@ namespace Osteogenesis
         {
             return GetInternalAnglesTriangleUnitSphere(tri.A, tri.B, tri.C);
         }
-        
+
         public static float AreaQuadOnUnitSphere(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
         {
             var angles = GetInternalAnglesQuadUnitSphere(a, b, c, d);
             return angles.x + angles.y + angles.z + angles.w - 2.0f * Mathf.PI;
         }
-        
+
         public static float AreaQuadOnUnitySphere(Quad quad)
         {
             return AreaQuadOnUnitSphere(quad.A, quad.B, quad.C, quad.D);
@@ -64,7 +64,36 @@ namespace Osteogenesis
         {
             if (vertices == null || vertices.Count == 0) return 0;
             var angles = GetInternalAnglesPolygonOnUnitSphere(vertices);
-            return angles.Sum() - (vertices.Count - 2) * Mathf.PI;
+
+            var excess = angles.Sum() - ((vertices.Count - 2) * Mathf.PI);
+
+            //DrawInternalPolygonWithNormals(vertices, null);
+
+            // if (excess > 1f)
+            // {
+            //     string debugInfo = "Overly large output" + excess + " for: ";
+            //     foreach (var vertex in vertices)
+            //     {
+            //         debugInfo += vertex.ToString("F4") + " ";
+            //     }
+            //
+            //     debugInfo += '\n';
+            //
+            //     foreach (var angle in angles)
+            //     {
+            //         debugInfo += angle + " ";
+            //     }
+            //     
+            //     debugInfo += '\n';
+            //
+            //     debugInfo += "Angle sum: " + angles.Sum();
+            //     
+            //     Debug.Log(debugInfo);
+            //     
+            //     DrawInternalPolygonWithNormals(vertices, null);
+            // }
+
+            return excess;
         }
 
         private static List<float> GetInternalAnglesPolygonOnUnitSphere(List<Vector3> vertices)
@@ -73,44 +102,74 @@ namespace Osteogenesis
             if (vertices.Count == 0) return new List<float>();
 
             //Generating the intersecting plane normals
-            var normals = new List<Vector3>();
+            var normals = new List<Vector3>(vertices.Count);
+            var directionals = new List<Vector3>(vertices.Count);
+            
             for (int i = 0; i < vertices.Count; i++)
             {
+                //var t =
+                //    new Triangle(vertices[i], Vector3.zero, vertices[(i + 1) % vertices.Count]);
+                //normals.Add(t.GetNormal());
+                //var dw = t.C - t.A;
+                //directionals.Add(dw);
+                
                 normals.Add(
                     Vector3.Cross(-vertices[i], vertices[(i + 1) % vertices.Count] - vertices[i]).normalized
                 );
+                
+                directionals.Add(vertices[(i + 1) % vertices.Count] - vertices[i]);
             }
 
-            var angles = new List<float>();
+            var angles = new List<float>(normals.Count);
 
             //Calculating dihedral angles
             for (int i = 0; i < normals.Count; i++)
             {
-                float angle;
-                if (Vector3.Dot(normals[i], -normals[(i + 1) % normals.Count]) <= 0f)
-                {
-                    angle = Vector3.Angle(normals[i], -normals[(i + 1) % normals.Count]) * Mathf.Deg2Rad;
-                }
-                else
-                {
-                    angle = (360f - Vector3.Angle(normals[i], -normals[(i + 1) % normals.Count])) * Mathf.Deg2Rad;
-                }
-
-                angles.Add(
-                    angle
-                );
+                var n1 = normals[i];
+                var n2 = normals[(i + 1) % normals.Count];
+                var dw = directionals[(i + 1) % normals.Count];
+                var angle = AngleBetweenSurfaceNormals(n1, n2, dw) * Mathf.Deg2Rad;
+                
+                angles.Add(angle);
+                // angles.Add(
+                //     AngleBetweenSurfaceNormals(normals[i], normals[(i + 1) % normals.Count]) * Mathf.Deg2Rad
+                // );
             }
+
+            // string debug = "Angles: ";
+            // foreach (var angle in angles)
+            // {
+            //     debug += angle + ", ";
+            // }
 
             //DrawInternalPolygonWithNormals(vertices, normals);
 
             return angles;
         }
 
+        /*
+         * Calculates the internal angle between 2 surface
+         * (values range from 0 to 360)
+         */
+        public static float AngleBetweenSurfaceNormals(Vector3 n1, Vector3 n2, Vector3 dw)
+        {
+            return Vector3.Dot(n1, dw) < 0f ? Vector3.Angle(n1, -n2) : 360f - Vector3.Angle(n1, -n2);
+        }
+
+
+        // /*
+        //  * Calculates the internal angle between 2 surface
+        //  * (values range from 0 to 360)
+        //  */
+        // public static float AngleBetweenSurfaceNormals(Vector3 n1, Vector3 n2)
+        // {
+        //     return Vector3.Dot(n1, n2) > 0f ? Vector3.Angle(n1, -n2) : 180f - Vector3.Angle(n1, -n2);
+        // }
+
         private static void DrawInternalPolygonWithNormals(List<Vector3> vertices, List<Vector3> normals)
         {
             for (int i = 0; i < vertices.Count; i++)
             {
-                //More efficient variant of:
                 var tri = new Triangle(
                     vertices[i],
                     Vector3.zero,
@@ -121,18 +180,18 @@ namespace Osteogenesis
                 switch (i)
                 {
                     case 0:
-                        tri.DebugDraw(Color.red);
+                        tri.DebugDraw(Color.green, 300f);
                         break;
                     case 1:
-                        tri.DebugDraw(Color.yellow);
+                        tri.DebugDraw(Color.yellow, 300f);
                         break;
                     default:
-                        tri.DebugDraw(Color.green);
+                        tri.DebugDraw(Color.white, 300f);
                         break;
                 }
 
                 //Drawing its normal
-                Debug.DrawRay((vertices[i] + vertices[(i + 1) % vertices.Count]) / 3f, normals[i]);
+                if (normals != null) Debug.DrawRay((vertices[i] + vertices[(i + 1) % vertices.Count]) / 3f, normals[i]);
             }
         }
     }

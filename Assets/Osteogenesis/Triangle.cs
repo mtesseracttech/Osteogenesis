@@ -37,11 +37,11 @@ namespace Osteogenesis
             return Vector3.Cross(B - A, C - A).magnitude * 0.5f;
         }
 
-        public void DebugDraw(Color color)
+        public void DebugDraw(Color color, float duration = 0f)
         {
-            Debug.DrawLine(A, B, color);
-            Debug.DrawLine(B, C, color);
-            Debug.DrawLine(C, A, color);
+            Debug.DrawLine(A, B, color, duration);
+            Debug.DrawLine(B, C, color, duration);
+            Debug.DrawLine(C, A, color, duration);
         }
     }
 }
