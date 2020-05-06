@@ -9,25 +9,28 @@ public class OsteogenesisBench : MonoBehaviour
 
     private GaussArea gaussArea;
 
+    //private List<(Vector3, Vector3)> _transformedPivotNormals = new List<(Vector3, Vector3)>();
+    //private float normalizationFactor = 1.0f;
+    
     // Start is called before the first frame update
     void Start()
     {
         if(testObject == null) Debug.Log("No Test Object was bound");
         
         if(!testObject.GetComponent<MeshFilter>()) Debug.Log("No Meshfilter on the Test Object");
-        
-        gaussArea = new GaussArea(testObject.GetComponent<MeshFilter>().sharedMesh);
-        
-        //Debug.Log(gaussArea.ToString());
-    }
 
+        var mesh = testObject.GetComponent<MeshFilter>().sharedMesh;
+        
+        gaussArea = new GaussArea(mesh);
+        
+        //gaussArea.DrawPivotNormals(testObject.transform);
+        //gaussArea.DrawVertexDebugInfo(testObject.transform);
+        //gaussArea.DrawSurfaceInfo();
+        Debug.Log(gaussArea.ToString());
+    }
+    
     // Update is called once per frame
     void Update()
     {
-        if (gaussArea != null)
-        {
-            gaussArea.DrawSurfaceInfo();
-            //gaussArea.DrawPivotNormals();
-        }
     }
 }
