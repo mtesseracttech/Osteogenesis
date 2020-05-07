@@ -4,19 +4,19 @@ namespace Osteogenesis
 {
     public class EdgeIndices : IComparable<EdgeIndices>
     {
-        public EdgeIndices(int i1, int i2)
-        {
-            this.I1 = i1;
-            this.I2 = i2;
-        }
-
         public int I1 { get; }
 
         public int I2 { get; }
+        public EdgeIndices(int i1, int i2)
+        {
+            I1 = i1;
+            I2 = i2;
+        }
 
         protected bool Equals(EdgeIndices other)
         {
-            return I1 == other.I1 && I2 == other.I2;
+            //Symmetric comparison, to make sure that A-B == B-A
+            return I1 == other.I1 && I2 == other.I2 || I1 == other.I2 && I2 == other.I1;
         }
 
         public override bool Equals(object obj)
@@ -29,10 +29,8 @@ namespace Osteogenesis
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return (I1 * 397) ^ I2;
-            }
+            //Symmetric hash, to make sure that A-B == B-A
+            return I1 ^ I2;
         }
 
         public int CompareTo(EdgeIndices other)
